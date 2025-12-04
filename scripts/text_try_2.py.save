@@ -1,0 +1,89 @@
+#!/usr/bin/python
+# SIMPLE TEXT DISPLAY FROM TEXT FILE
+# Autor : A.HALET
+
+
+import time
+import sys
+import os
+
+from rgbmatrix import RGBMatrix, RGBMatrixOptions, graphics
+from os import path
+
+
+#============================================
+#            MATRIX CONFIG
+#============================================
+options = RGBMatrixOptions()
+options.rows = 16
+options.cols = 32
+options.chain_length = 1
+options.parallel = 2
+options.brightness = 100
+options.multiplexing = 4
+#options.gpio_slowdown = 1
+options.show_refresh_rate = 1
+options.limit_refresh_rate_hz = 300
+#options.row_address_type = 2
+#options.pixel_mapper_config = "V-mapper;Rotate:-90"
+options.disable_hardware_pulsing = 1
+options.hardware_mapping = 'regular'
+matrix = RGBMatrix(options = options)
+
+#============================================
+#            TEXT CONFIG
+#============================================
+offscreen_canvas = matrix.CreateFrameCanvas()
+font = graphics.Font()
+font.LoadFont("../fonts/texgyre-27.bdf")
+pos = matrix.height
+
+try:
+    print("Press CTRL-C to stop.")
+
+except KeyboardInterrupt:
+    offscreen_canvas.Clear()
+    matrix.Clear()
+    sys.exit(0)
+
+
+#============================================
+#                MAIN LOOP
+#============================================
+while True: 
+#============================================
+#                  INIT
+#============================================
+#    matrix.Clear()
+    offscreen_canvas.Clear()
+
+    pos_x=0
+#    pos_y=font.height
+    pos_y=32
+    color_R=255
+    color_G=255
+    color_B=255
+
+    print(pos_y)
+
+#============================================
+#            READ TEXT FILE
+#============================================
+    if(path.exists('/home/cvonselen/rpi-rgb-led-matrix/toprint.txt')):
+        with open('/home/cvonselen/rpi-rgb-led-matrix/toprint.txt', 'r') as file:
+            content = file.readlines()
+            txt_to_print=content[0].decode('utf8')
+            file.close()
+    else :
+        txt_to_print="01234"
+
+    while True:
+#============================================
+#            DISPLAY TEXT
+#============================================
+        len_pic = graphics.DrawText(offscreen_canvas, font,pos_x, pos_y,graphics.Color(color_R,color_G,color_B),txt_to_print)
+#        pos -= 1
+#        if (pos + len_pic < 0):
+#            pos = offscreen_canvas.width
+#        time.sleep(0.01)
+        offscreen_canvas = matrix.SwapOnVSync(offscreen_canvas)
