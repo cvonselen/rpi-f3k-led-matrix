@@ -501,6 +501,7 @@ class BootRenderer(BaseRenderer):
             graphics.DrawText(canvas, title_font,
                               self._cfg.boot_title_x, self._cfg.boot_title_y,
                               graphics.Color(255, 255, 255), "Superfly")
+
             self._draw_knight_rider(canvas)
 
 
@@ -846,7 +847,7 @@ class WorkRenderer(BaseRenderer):
     _DOT_BOT_Y2: int = 36
 
     def render(self, canvas, data: TimingData) -> None:
-        font  = self._fonts.get("spleen-22x64")
+        font  = self._fonts.get("BigTime")
         color = graphics.Color(0, 255, 0)
 
         # Minutes (MM)
@@ -1108,7 +1109,7 @@ class MatrixDisplayApp:
             "6x9":     "6x9.bdf",
             "spleen-12x24": "spleen-12x24.bdf",  # 24 px monospace, full ASCII
             "spleen-16x32": "spleen-16x32.bdf",  # 32 px monospace, full ASCII
-            "spleen-22x64": "spleen-22x64.bdf",  # 64 px tall, 22 px ink + 2 px right pad, digits+colon
+            "BigTime": "BigTime-22x64.bdf",  # 64 px tall, 22 px ink + 2 px right pad, digits+colon
             "spleen-32x64": "spleen-32x64.bdf",  # 64 px monospace, full ASCII
         }
         for name, filename in font_map.items():
