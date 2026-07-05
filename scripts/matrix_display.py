@@ -61,7 +61,7 @@ logger = logging.getLogger(__name__)
 class SerialConfig:
     """Serial port connection parameters."""
     port: str = "/dev/ttyUSB0"
-    baud_rate: int = 19200
+    baud_rate: int = 115200
     timeout: float = 0.3
     startup_delay: float = 0.0       # seconds to wait before opening the port
     retry_count: int = 10            # number of open attempts before giving up (0 = unlimited)
@@ -819,7 +819,11 @@ class NoFlyRenderer(BaseRenderer):
         color = graphics.Color(255, 0, 0)
         self._draw_large_time(canvas, data.time_minutes, data.time_seconds, color)
         self._draw_header(canvas, "NOFLY", self._round_group_label(data), color)
-        self._draw_task_name(canvas, data.task_name)
+        if data.task_name.startswith("All Up"):
+            task_label = f"All Up Flight: {data.flight_num}"
+        else:
+            task_label = data.task_name
+        self._draw_task_name(canvas, task_label)
 
 
 class WorkRenderer(BaseRenderer):
@@ -975,7 +979,7 @@ class SerialReader:
 
     def has_data(self) -> bool:
         """Return True if data is available in the serial port or the internal parser buffer."""
-        if "\n" in self._rx_buffer:
+        if "\r\n" in self._rx_buffer:
             return True
         try:
             return bool(self._port and self._port.in_waiting > 0)
@@ -1013,8 +1017,8 @@ class SerialReader:
             return None
 
         # Process the first complete newline-terminated line.
-        while "\n" in self._rx_buffer:
-            line, self._rx_buffer = self._rx_buffer.split("\n", 1)
+        while "\r\n" in self._rx_buffer:
+            line, self._rx_buffer = self._rx_buffer.split("\r\n", 1)
             line = line.strip()
 
             if not line:
@@ -1198,7 +1202,7 @@ class MatrixDisplayApp:
             return "no_data"
 
     def _draw_connection_dot(self, canvas) -> None:
-        """Draw a 3×3 status dot at the top-right corner of every rendered frame.
+        """Draw a single-pixel status dot at the top-right corner of every rendered frame.
 
         not_connected → flashing red
         healthy       → green
@@ -1206,7 +1210,7 @@ class MatrixDisplayApp:
         no_data       → flashing orange
         """
         state = self._get_connection_state()
-        dot_x = self._display_cfg.display_width - 2
+        dot_x = self._display_cfg.display_width - 1
         dot_y = 0
         if state == "not_connected":
             if int(time.time() * 2) % 2 == 0:
@@ -1225,9 +1229,7 @@ class MatrixDisplayApp:
                 r, g, b = 255, 140, 0
             else:
                 return
-        for dy in range(2):
-            for dx in range(2):
-                canvas.SetPixel(dot_x + dx, dot_y + dy, r, g, b)
+        canvas.SetPixel(dot_x, dot_y, r, g, b)
 
     # ------------------------------------------------------------------
     # Packet handlers
@@ -1430,7 +1432,7 @@ def main() -> None:
     serial_config = SerialConfig(
         port="/dev/ttyUSB0",
         #port="COM4",
-        baud_rate=19200,
+        baud_rate=115200,
         startup_delay=0.0,
         timeout=0.3,
     )
