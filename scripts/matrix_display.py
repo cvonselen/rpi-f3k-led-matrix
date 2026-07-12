@@ -90,11 +90,11 @@ class DisplayConfig:
     font_base_path: str = "../fonts"
     no_data_timeout: float = 30.0        # seconds before showing no-data screen
     pilot_list_display_time: float = 15.0  # seconds to hold pilot list display
-    time_row_y: int = 48                 # y-baseline for the large time font
-    colon_x: int = 45                  # x-position of the colon separator
-    colon_y: int = 43
-    time_sec_x: int = 50                # x-position of the seconds digits
-    time_sec_y: int = 48
+    time_row_y: int = 47                 # y-baseline for the large time font
+    colon_x: int = 40                  # x-position of the colon separator
+    colon_y: int = 41
+    time_sec_x: int = 49                # x-position of the seconds digits
+    time_sec_y: int = 47
     header_left_x: int = 0             # x-position of the left header label
     header_right_x: int = 42          # x-position of the right header label
     header_y: int = 8
@@ -347,10 +347,12 @@ class BaseRenderer(ABC):
     def _draw_large_time(self, canvas, minutes: str, seconds: str,
                          color: graphics.Color) -> None:
         """Draw MM : SS in the large time font."""
-        font = self._fonts.get("time")
-        graphics.DrawText(canvas, font, 0, self._cfg.time_row_y, color, minutes)
-        graphics.DrawText(canvas, font, self._cfg.colon_x, self._cfg.colon_y, color, ":")
-        graphics.DrawText(canvas, font, self._cfg.time_sec_x, self._cfg.time_sec_y, color, seconds)
+        font_time = self._fonts.get("Consolas-44")
+        font_colon = self._fonts.get("Consolas-32")
+
+        graphics.DrawText(canvas, font_time, -2, self._cfg.time_row_y, color, minutes)
+        graphics.DrawText(canvas, font_colon, self._cfg.colon_x, self._cfg.colon_y, color, ":")
+        graphics.DrawText(canvas, font_time, self._cfg.time_sec_x, self._cfg.time_sec_y, color, seconds)
 
     def _draw_header(self, canvas, left_label: str, right_label: str,
                      left_color: graphics.Color,
@@ -420,7 +422,6 @@ class BootRenderer(BaseRenderer):
     _PASS_DURATION: float = 0.8   # seconds for one sweep pass
     _PHASE1_DURATION: float = _PASS_DURATION * 2   # two passes (down + up)
     _PHASE2_DURATION: float = _PASS_DURATION * 2   # two passes (right + left)
-    _PHASE3_DURATION: float = 5.0                  # text fade-in
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -459,7 +460,6 @@ class BootRenderer(BaseRenderer):
         elapsed = time.time() - self._start_time
         t1 = self._PHASE1_DURATION
         t2 = t1 + self._PHASE2_DURATION
-        t3 = t2 + self._PHASE3_DURATION
 
         if elapsed < t1:
             # Phase 1: horizontal bouncing wipe
@@ -485,15 +485,6 @@ class BootRenderer(BaseRenderer):
                 # right → left: trail is to the right, flip progress
                 self._draw_v_sweep(canvas, w, h, 1.0 - pass_progress,
                                    self._TRAIL[::-1])
-
-        elif elapsed < t3:
-            # Phase 3: fade in Superfly text over 2 s
-            fade = (elapsed - t2) / self._PHASE3_DURATION
-            bri = int(fade * 255)
-            title_font = self._fonts.get("spleen-12x24")
-            graphics.DrawText(canvas, title_font,
-                              self._cfg.boot_title_x, self._cfg.boot_title_y,
-                              graphics.Color(bri, bri, bri), "Superfly")
 
         else:
             # Hold final state — title at full brightness
@@ -1115,6 +1106,8 @@ class MatrixDisplayApp:
             "spleen-16x32": "spleen-16x32.bdf",  # 32 px monospace, full ASCII
             "BigTime": "BigTime-22x64.bdf",  # 64 px tall, 22 px ink + 2 px right pad, digits+colon
             "spleen-32x64": "spleen-32x64.bdf",  # 64 px monospace, full ASCII
+            "Consolas-32": "Consolas-32.bdf",  # 36 px monospace, full ASCII
+            "Consolas-44": "Consolas-44.bdf",  # 44 px monospace, full ASCII
         }
         for name, filename in font_map.items():
             self._fonts.load(name, filename)
@@ -1430,8 +1423,8 @@ class MatrixDisplayApp:
 
 def main() -> None:
     serial_config = SerialConfig(
-        port="/dev/ttyUSB0",
-        #port="COM4",
+        #port="/dev/ttyUSB0",
+        port="COM5",
         baud_rate=115200,
         startup_delay=0.0,
         timeout=0.3,
